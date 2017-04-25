@@ -20,10 +20,10 @@ public class Window extends JFrame {
     JButton startButton;
     JButton stopButton;
     Timer timer;
-    Timer progressTimer;
+    Thread thread;
     boolean isProgramRunning = false;
     int counter;
-    boolean setFull = false;
+    
     
     
     public Window(ArrayList<Program> programs) {
@@ -33,7 +33,7 @@ public class Window extends JFrame {
         for (int i = 0; i < programs.size(); i++) {
             JLabel[] labelsTemp = new JLabel[programs.get(i).getNumOfActions()];
             for (int j = 0; j < programs.get(i).getNumOfActions(); j++) {
-                labelsTemp[j] = new JLabel(programs.get(i).getActionsNames()[j]);
+                labelsTemp[j] = new JLabel(programs.get(i).getActionsNames()[j] + "    (" + programs.get(i).getActionsTimes()[j] / 60000 + ") минут(ы)");
                 labelsTemp[j].setAlignmentX(JLabel.LEFT_ALIGNMENT);
             }
             labels.add(labelsTemp);
@@ -44,7 +44,7 @@ public class Window extends JFrame {
         for (int i = 0; i < programs.size(); i++) {
             JProgressBar[] progressBarsTemp = new JProgressBar[programs.get(i).getNumOfActions()];
             for (int j = 0; j < programs.get(i).getNumOfActions(); j++) {
-                progressBarsTemp[j] = new JProgressBar(0, 100);
+                progressBarsTemp[j] = new JProgressBar(0, 99);
             }
             progressBars.add(progressBarsTemp);
         }
@@ -162,12 +162,45 @@ public class Window extends JFrame {
         stopButton.setEnabled(false);
         isProgramRunning = false;
         startButton.setEnabled(true);
-        progressTimer.cancel();
+        thread.interrupt();
     }
 
     private void doProgram() {
+        
+        long currentTime = currentProgram.getActionsTimes()[counter];
+        long onePercent = currentTime / 100;
+        
+        thread = new Thread(new Runnable() {
+            int value = 0;
+            @Override
+            public void run() {
+                while (value <= 100) {
+                    try {
+                        Thread.sleep(onePercent);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                        System.out.println("Ошибка в цикле");
+                    }
+                    currentProgressBars[counter].setValue(value++);
+                }
+                if (counter < currentProgram.getNumOfActions()) {
+                    warningDialog.setText(currentProgram.getActionsNames()[counter]);
+                    Sound.playSound("warning.wav").join();
+                    warningDialog.setVisible(true);
+                    counter++;
+                    value = 0;
+                    System.out.println("counter после" + counter);
+                } else {
+                    System.out.println("Else counter  " + counter);
+                    warningDialog.setText("Программа завершена!");
+                    warningDialog.setVisible(true);
+                    stopProgram();
+                }
+            }
+        });
+        thread.start();
 
-        progressTimer = new Timer();
+        /*progressTimer = new Timer();
         long currentTime = currentProgram.getActionsTimes()[counter];
         long onePercent = currentTime / 100;
         progressTimer.schedule(new TimerTask() {
@@ -199,7 +232,7 @@ public class Window extends JFrame {
                 }
 
             }
-        }, currentProgram.getActionsTimes()[counter]);
+        }, currentProgram.getActionsTimes()[counter]);*/
 
     }
 
@@ -215,7 +248,7 @@ public class Window extends JFrame {
 
             dialogText = new JLabel(message);
             dialogText.setAlignmentX(Component.CENTER_ALIGNMENT);
-            add(dialogText, BorderLayout.CENTER);
+            getContentPane().add(dialogText, BorderLayout.CENTER);
             setLocationRelativeTo(null);
 
             JButton yes = new JButton("Продолжить");
@@ -242,7 +275,7 @@ public class Window extends JFrame {
             JPanel panel = new JPanel();
             panel.add(yes);
             panel.add(no);
-            add(panel, BorderLayout.SOUTH);
+            getContentPane().add(panel, BorderLayout.SOUTH);
             pack();
         }
         public void setText(String message) {

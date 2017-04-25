@@ -10,7 +10,7 @@ public class Main {
         String[] actions2 = {"Залить компоненты","Добавить медь","Добавить воду","Перемешать","Выключить"};
         String[] actions3 = {"Включить","Добавить","Выключить","Перемешать","Убрать"};
         
-        long[] times = {MINUTE * 1, MINUTE * 1, MINUTE * 1, MINUTE * 1, MINUTE * 1};
+        long[] times = {MINUTE * 1, MINUTE * 2, MINUTE * 3, MINUTE * 1, MINUTE * 1};
         
         Program program1 = new Program("Программа № 1");
         program1.setActionsNames(actions1);
